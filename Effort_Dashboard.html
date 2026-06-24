@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efforts Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1E3A8A;
+            --secondary-blue: #3B82F6;
+            --light-blue: #DBEAFE;
+            --accent-blue: #1D4ED8;
+            --electric-blue: #0EA5E9;
+            --light-gray: #F8FAFC;
+            --medium-gray: #E2E8F0;
+            --dark-gray: #334155;
+            --white: #FFFFFF;
+            --success-green: #10B981;
+            --warning-orange: #F59E0B;
+            --error-red: #EF4444;
+            --light-success: #ECFDF5;
+            --light-warning: #FFFBEB;
+            --light-error: #FEF2F2;
+            --teal: #14B8A6;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
+            --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+
+            /* Status Colors */
+            --color-high:   #10B981;   /* Green  > 80h  */
+            --color-medium: #F97316;   /* Orange 20-80h */
+            --color-low:    #EAB308;   /* Yellow 0-20h  */
+            --color-zero:   #EF4444;   /* Red    0h     */
+
+            --color-high-bg:   #F0FDF4;
+            --color-medium-bg: #FFF7ED;
+            --color-low-bg:    #FEFCE8;
+            --color-zero-bg:   #FEF2F2;
+
+            --color-high-badge:   #DCFCE7;
+            --color-medium-badge: #FFEDD5;
+            --color-low-badge:    #FEF9C3;
+            --color-zero-badge:   #FEE2E2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: var(--gradient-1);
+            color: var(--white);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header::after {
+            content: '📊📈📋';
+            position: absolute;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            opacity: 0.7;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50%       { transform: translateY(-50%) scale(1.1); }
+        }
+
+        @keyframes spin {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ── Layout ── */
+        .content { padding: 30px; }
+
+        .section {
+            background: linear-gradient(145deg, var(--white) 0%, rgba(255,255,255,0.9) 100%);
+            border: 1px solid rgba(203,213,225,0.5);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--gradient-3);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .section:hover::before  { transform: scaleX(1); }
+        .section:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--electric-blue);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--electric-blue) 100%);
+            color: var(--white);
+            padding: 18px 25px;
+            font-weight: 700;
+            font-size: 1.2em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .section-content { padding: 20px; }
+
+        /* ── Form ── */
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--dark-gray);
+            min-width: 120px;
+        }
+
+        .form-control {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(74,122,151,0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-3);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(79,172,254,0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(79,172,254,0.6);
+        }
+
+        /* ── Stats ── */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, var(--white) 0%, #f8fafc 100%);
+            border: 2px solid var(--medium-gray);
+            border-radius: 20px;
+            padding: 30px 25px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 900;
+            background: var(--gradient-1);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        /* ── Checkboxes ── */
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
+
+        .checkbox-item { display: flex; align-items: center; gap: 8px; }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px; height: 18px;
+            accent-color: var(--primary-blue);
+        }
+
+        .checkbox-item label {
+            font-size: 14px;
+            color: var(--dark-gray);
+            cursor: pointer;
+            min-width: auto;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--medium-gray);
+            align-items: center;
+        }
+
+        .legend-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-right: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: var(--dark-gray);
+            font-weight: 500;
+            background: var(--white);
+            padding: 5px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--medium-gray);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .dot-high   { background: var(--color-high); }
+        .dot-medium { background: var(--color-medium); }
+        .dot-low    { background: var(--color-low); }
+        .dot-zero   { background: var(--color-zero); }
+
+        /* ── TABLE ── */
+        .data-table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--medium-gray);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            table-layout: fixed;
+        }
+
+        /* Column widths */
+        .data-table colgroup col:nth-child(1) { width: 35%; }
+        .data-table colgroup col:nth-child(2) { width: 25%; }
+        .data-table colgroup col:nth-child(3) { width: 20%; }
+        .data-table colgroup col:nth-child(4) { width: 20%; }
+
+        /* Header */
+        .data-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--white);
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-right: 1px solid rgba(255,255,255,0.15);
+            vertical-align: middle;
+        }
+
+        .data-table th:nth-child(3),
+        .data-table th:nth-child(4) { text-align: right; }
+        .data-table th:last-child    { border-right: none; }
+
+        /* Cells */
+        .data-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(226,232,240,0.6);
+            font-size: 14px;
+            color: var(--dark-gray);
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-right: 1px solid rgba(226,232,240,0.4);
+        }
+
+        .data-table td:nth-child(3),
+        .data-table td:nth-child(4) { text-align: right; }
+        .data-table td:first-child   { white-space: normal; word-break: break-word; }
+        .data-table td:last-child    { border-right: none; }
+
+        /* ── Row base & alternating ── */
+        .data-table tbody tr {
+            background: var(--white);
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .data-table tbody tr:nth-child(even) { background: #f8fafc; }
+
+        /* ── Status rows — left accent + subtle bg tint ── */
+        .data-table tbody tr.status-high {
+            border-left: 5px solid var(--color-high);
+            background: var(--color-high-bg) !important;
+        }
+
+        .data-table tbody tr.status-medium {
+            border-left: 5px solid var(--color-medium);
+            background: var(--color-medium-bg) !important;
+        }
+
+        .data-table tbody tr.status-low {
+            border-left: 5px solid var(--color-low);
+            background: var(--color-low-bg) !important;
+        }
+
+        .data-table tbody tr.status-zero {
+            border-left: 5px solid var(--color-zero);
+            background: var(--color-zero-bg) !important;
+        }
+
+        /* Hover */
+        .data-table tbody tr:hover {
+            filter: brightness(0.95);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+            cursor: default;
+        }
+
+        /* ── Effort Badge ── */
+        .effort-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .badge-high   { background: var(--color-high-badge);   color: #065F46; border: 1px solid #6EE7B7; }
+        .badge-medium { background: var(--color-medium-badge);  color: #9A3412; border: 1px solid #FDBA74; }
+        .badge-low    { background: var(--color-low-badge);     color: #713F12; border: 1px solid #FDE047; }
+        .badge-zero   { background: var(--color-zero-badge);    color: #991B1B; border: 1px solid #FCA5A5; }
+
+        /* ── Percent bar ── */
+        .percent-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .percent-bar-wrap {
+            flex: 1;
+            max-width: 80px;
+            height: 7px;
+            background: var(--medium-gray);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .percent-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.6s ease;
+        }
+
+        /* bar fill colours match status */
+        .fill-high   { background: var(--color-high); }
+        .fill-medium { background: var(--color-medium); }
+        .fill-low    { background: var(--color-low); }
+        .fill-zero   { background: var(--color-zero); }
+
+        .percent-text {
+            min-width: 58px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        /* ── Alerts ── */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-info    { background: var(--light-blue);    color: var(--accent-blue);   border: 1px solid var(--secondary-blue); }
+        .alert-success { background: var(--light-success); color: var(--success-green); border: 1px solid var(--success-green); }
+        .alert-error   { background: var(--light-error);   color: var(--error-red);     border: 1px solid var(--error-red); }
+
+        /* ── File input ── */
+        .file-input-wrapper { position: relative; display: inline-block; overflow: hidden; cursor: pointer; }
+        .file-input-wrapper input[type="file"] { position: absolute; left: -9999px; }
+
+        /* ── Loading ── */
+        .loading { display: none; text-align: center; padding: 50px; color: var(--primary-blue); }
+
+        .spinner {
+            width: 60px; height: 60px;
+            border: 6px solid rgba(59,130,246,0.2);
+            border-top: 6px solid var(--secondary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 768px) {
+            .content { padding: 15px; }
+            .form-group { flex-direction: column; align-items: stretch; }
+            .form-group label { min-width: auto; }
+            .summary-stats { grid-template-columns: 1fr; }
+            .data-table { table-layout: auto; }
+            .data-table th, .data-table td { white-space: normal; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Efforts Dashboard</h1>
+    </div>
+
+    <div class="content">
+
+        <!-- File Upload -->
+        <div class="section">
+            <div class="section-header">📁 Upload Excel File</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="fileInput">📋 Excel File:</label>
+                    <input type="text" id="filePath" class="form-control" readonly placeholder="No file selected">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" accept=".xls,.xlsx,.xlsm,.xlsb">
+                        <button class="btn btn-primary">🔍 Browse</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sheet Selection -->
+        <div class="section hidden" id="sheetSection">
+            <div class="section-header">📊 Select Sheet</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="sheetSelect">📄 Sheet:</label>
+                    <select id="sheetSelect" class="form-control">
+                        <option value="">Select a sheet…</option>
+                    </select>
+                    <button id="loadSheetBtn" class="btn btn-primary">⚡ Load Sheet</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Name Filter -->
+        <div class="section hidden" id="filterSection">
+            <div class="section-header">👤 Filter by Name</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="nameSelect">🏷️ Name:</label>
+                    <select id="nameSelect" class="form-control">
+                        <option value="">Select a name…</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="summary-stats hidden" id="summarySection">
+            <div class="stat-card">
+                <div class="stat-value" id="totalEffort">N/A</div>
+                <div class="stat-label">⏱️ Total Remaining Effort</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgPercent">N/A</div>
+                <div class="stat-label">📈 Average % Remaining</div>
+            </div>
+        </div>
+
+        <!-- Column Selection -->
+        <div class="section hidden" id="columnSection">
+            <div class="section-header">⚙️ Additional Columns to Display</div>
+            <div class="section-content">
+                <div class="checkbox-group" id="columnCheckboxes"></div>
+            </div>
+        </div>
+
+        <!-- Data Display -->
+        <div class="section hidden" id="dataSection">
+            <div class="section-header">📋 Data Display</div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <span class="legend-title">Effort Status:</span>
+                <div class="legend-item">
+                    <div class="legend-dot dot-high"></div>
+                    <span>High &gt; 80h</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-medium"></div>
+                    <span>Medium 20 – 80h</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-low"></div>
+                    <span>Low &gt; 0 to &lt; 20h</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot dot-zero"></div>
+                    <span>Zero 0h</span>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="data-table-container">
+                    <table class="data-table" id="dataTable">
+                        <colgroup><col><col><col><col></colgroup>
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <div>Processing data…</div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="alertContainer"></div>
+    </div>
+</div>
+
+<script>
+    let originalData    = null;
+    let processedData   = null;
+    let filteredData    = null;
+    let selectedColumns = [];
+
+    /* ── Helpers ── */
+    function cleanNumericValue(v) {
+        if (v === null || v === undefined || String(v).trim() === '') return 0;
+        let s = String(v).trim().toLowerCase();
+        if (s.endsWith('h')) s = s.slice(0, -1);
+        return parseFloat(s) || 0;
+    }
+
+    function cleanPercentValue(v) {
+        if (v === null || v === undefined || String(v).trim() === '') return 0;
+        return parseFloat(String(v).trim().replace('%', '')) || 0;
+    }
+
+    /*
+     * ── REVERSED STATUS LOGIC ──────────────────────────────────
+     *  > 80h  → 'high'   (Green)
+     *  20-80h → 'medium' (Orange)
+     *  0-20h  → 'low'    (Yellow)
+     *  0h     → 'zero'   (Red)
+     * ───────────────────────────────────────────────────────────
+     */
+    function getEffortStatus(hours) {
+        if (hours === 0)    return 'zero';    // Red
+        if (hours < 20)     return 'low';     // Yellow
+        if (hours <= 80)    return 'medium';  // Orange
+        return 'high';                        // Green
+    }
+
+    function showAlert(msg, type = 'info') {
+        const ac = document.getElementById('alertContainer');
+        const el = document.createElement('div');
+        el.className = `alert alert-${type}`;
+        el.textContent = msg;
+        ac.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+    }
+
+    const showLoading = () => document.getElementById('loadingIndicator').style.display = 'block';
+    const hideLoading = () => document.getElementById('loadingIndicator').style.display = 'none';
+
+    function resetApp() {
+        originalData = processedData = filteredData = null;
+        selectedColumns = [];
+        document.getElementById('filePath').value = '';
+        ['sheetSelect','nameSelect'].forEach(id =>
+            document.getElementById(id).innerHTML = '<option value="">Select…</option>');
+        document.getElementById('columnCheckboxes').innerHTML = '';
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = '';
+        document.getElementById('totalEffort').textContent = 'N/A';
+        document.getElementById('avgPercent').textContent  = 'N/A';
+        ['sheetSection','filterSection','summarySection','columnSection','dataSection']
+            .forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
+    /* ── File browse ── */
+    document.querySelector('.file-input-wrapper .btn')
+        .addEventListener('click', () => document.getElementById('fileInput').click());
+
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) { document.getElementById('filePath').value = file.name; loadExcelFile(file); }
+    });
+
+    /* ── Workbook load ── */
+    function loadExcelFile(file) {
+        showLoading();
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                if (!wb.SheetNames.length) {
+                    showAlert('No sheets found.', 'error'); resetApp(); hideLoading(); return;
+                }
+
+                const sel = document.getElementById('sheetSelect');
+                sel.innerHTML = '<option value="">Select a sheet…</option>';
+                wb.SheetNames.forEach(n => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = n;
+                    sel.appendChild(o);
+                });
+                document.getElementById('sheetSection').classList.remove('hidden');
+
+                const valid = findValidSheet(wb, wb.SheetNames);
+                if (valid) {
+                    sel.value = valid;
+                    showAlert(`Auto-loaded sheet: '${valid}'`, 'success');
+                    loadSheetData(wb, valid);
+                } else {
+                    showAlert(`Found ${wb.SheetNames.length} sheet(s). Please select one.`, 'info');
+                    hideLoading();
+                }
+            } catch (err) {
+                showAlert(`Failed to read file: ${err.message}`, 'error');
+                resetApp(); hideLoading();
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function findValidSheet(wb, names) {
+        const req = ['Name','Remaining','Percent complete'];
+        for (const n of names)
+            for (const r of [2,0,1,3,4]) {
+                try {
+                    const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], { header:1, raw:false, defval:'' });
+                    if (rows.length > r && req.every(c => rows[r].includes(c))) return n;
+                } catch { continue; }
+            }
+        return null;
+    }
+
+    document.getElementById('loadSheetBtn').addEventListener('click', function () {
+        const sheet = document.getElementById('sheetSelect').value;
+        const file  = document.getElementById('fileInput').files[0];
+        if (!sheet) { showAlert('Please select a sheet.', 'error'); return; }
+        if (!file)  { showAlert('Please select a file first.', 'error'); return; }
+        showLoading();
+        const reader = new FileReader();
+        reader.onload = e => {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+            loadSheetData(wb, sheet);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    /* ── Parse sheet ── */
+    function loadSheetData(wb, sheetName) {
+        const req = ['Name','Remaining','Percent complete'];
+        for (const headerRow of [2,0,1,3,4]) {
+            try {
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header:1, raw:false, defval:'' });
+                if (rows.length <= headerRow) continue;
+                const headers = rows[headerRow];
+                if (!req.every(c => headers.includes(c))) continue;
+
+                originalData = rows.slice(headerRow + 1).map(row => {
+                    const obj = {};
+                    headers.forEach((h, i) => obj[h] = row[i] || '');
+                    return obj;
+                }).filter(row => Object.values(row).some(v => String(v).trim() !== ''));
+
+                processLoadedData(sheetName, headerRow);
+                hideLoading();
+                return;
+            } catch { continue; }
+        }
+        showAlert(`Required columns (${req.join(', ')}) not found in '${sheetName}'.`, 'error');
+        resetApp(); hideLoading();
+    }
+
+    function processLoadedData(sheetName, headerRow) {
+        processedData = originalData.map(r => ({ ...r }));
+        let currentParent = '';
+        processedData.forEach(row => {
+            if (!String(row.Name).startsWith('>')) currentParent = row.Name;
+            row.Parent_Task = currentParent;
+            row.Remaining_numeric            = cleanNumericValue(row.Remaining);
+            row.Percent_complete_numeric      = cleanPercentValue(row['Percent complete']);
+            row.Percentage_Remaining_numeric  = 100 - row.Percent_complete_numeric;
+            row.Remaining_Effort_display      = row.Remaining_numeric.toFixed(2) + 'h';
+            row.Percentage_Remaining_display  = row.Percentage_Remaining_numeric.toFixed(2) + '%';
+            row.Task         = row.Parent_Task;
+            row.Assignee     = row.Name;
+            row.effortStatus = getEffortStatus(row.Remaining_numeric);
+        });
+        showAlert(`Sheet '${sheetName}' loaded (header row ${headerRow + 1}).`, 'success');
+        populateNameDropdown();
+        populateColumnSelection();
+        document.getElementById('filterSection').classList.remove('hidden');
+        document.getElementById('columnSection').classList.remove('hidden');
+    }
+
+    /* ── Dropdowns ── */
+    function populateNameDropdown() {
+        const sel = document.getElementById('nameSelect');
+        sel.innerHTML = '<option value="">Select a name…</option>';
+        if (!processedData) return;
+        const unique = [...new Set(
+            processedData
+                .filter(r => String(r.Name).startsWith('>') &&
+                             !String(r.Name).replace(/^>+/,'').trim().includes('_'))
+                .map(r => r.Name)
+        )].sort();
+        unique.forEach(n => {
+            const o = document.createElement('option');
+            o.value = o.textContent = n;
+            sel.appendChild(o);
+        });
+    }
+
+    function populateColumnSelection() {
+        const wrap = document.getElementById('columnCheckboxes');
+        wrap.innerHTML = '';
+        if (!originalData?.length) return;
+        const excluded = new Set([
+            'Name','Remaining','Percent complete',
+            'Remaining_numeric','Percent_complete_numeric','Parent_Task',
+            'Task','Assignee','Remaining_Effort_display',
+            'Percentage_Remaining_display','Percentage_Remaining_numeric','effortStatus'
+        ]);
+        Object.keys(originalData[0]).filter(c => !excluded.has(c)).forEach(col => {
+            const item = document.createElement('div'); item.className = 'checkbox-item';
+            const cb   = document.createElement('input');
+            cb.type = 'checkbox'; cb.id = `col_${col}`; cb.value = col;
+            cb.addEventListener('change', updateDisplayColumns);
+            const lbl  = document.createElement('label');
+            lbl.htmlFor = `col_${col}`; lbl.textContent = col;
+            item.append(cb, lbl); wrap.appendChild(item);
+        });
+    }
+
+    function updateDisplayColumns() {
+        selectedColumns = Array.from(
+            document.querySelectorAll('#columnCheckboxes input:checked')
+        ).map(cb => cb.value);
+        displayFilteredData();
+    }
+
+    /* ── Filter & display ── */
+    document.getElementById('nameSelect').addEventListener('change', displayFilteredData);
+
+    function displayFilteredData() {
+        const name = document.getElementById('nameSelect').value;
+        if (!name || !processedData) {
+            clearTable();
+            document.getElementById('totalEffort').textContent = 'N/A';
+            document.getElementById('avgPercent').textContent  = 'N/A';
+            document.getElementById('summarySection').classList.add('hidden');
+            document.getElementById('dataSection').classList.add('hidden');
+            return;
+        }
+
+        filteredData = processedData.filter(r => r.Name === name);
+        if (!filteredData.length) {
+            showAlert(`No data for '${name}'.`, 'info');
+            clearTable();
+            document.getElementById('summarySection').classList.add('hidden');
+            document.getElementById('dataSection').classList.add('hidden');
+            return;
+        }
+
+        const totalEffort = filteredData.reduce((s, r) => s + r.Remaining_numeric, 0);
+        const avgPct      = filteredData.reduce((s, r) => s + r.Percentage_Remaining_numeric, 0) / filteredData.length;
+        document.getElementById('totalEffort').textContent = `${totalEffort.toFixed(2)}h`;
+        document.getElementById('avgPercent').textContent  = `${avgPct.toFixed(2)}%`;
+
+        displayTable();
+        document.getElementById('summarySection').classList.remove('hidden');
+        document.getElementById('dataSection').classList.remove('hidden');
+    }
+
+    /* ── Table render ── */
+    function displayTable() {
+        const extraCols   = selectedColumns;
+        const totalCols   = 4 + extraCols.length;
+        const displayCols = [
+            'Task','Assignee',
+            'Remaining_Effort_display','Percentage_Remaining_display',
+            ...extraCols
+        ];
+
+        /* colgroup */
+        const cg = document.querySelector('#dataTable colgroup');
+        cg.innerHTML = '';
+        const basePcts = ['35%','25%','20%','20%'];
+        for (let i = 0; i < totalCols; i++) {
+            const col = document.createElement('col');
+            col.style.width = basePcts[i] || `${Math.floor(40 / extraCols.length)}%`;
+            cg.appendChild(col);
+        }
+
+        /* headers */
+        const thead = document.getElementById('tableHead');
+        thead.innerHTML = '';
+        const hr = document.createElement('tr');
+        const labels = {
+            Task: 'TASK',
+            Assignee: 'ASSIGNEE',
+            Remaining_Effort_display: 'REMAINING EFFORT',
+            Percentage_Remaining_display: 'PERCENTAGE REMAINING'
+        };
+        displayCols.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = labels[col] || col.replace(/_display$/,'').replace(/_/g,' ').toUpperCase();
+            hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+
+        /* rows */
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        filteredData.forEach(row => {
+            const tr     = document.createElement('tr');
+            const status = row.effortStatus;   // 'high' | 'medium' | 'low' | 'zero'
+            tr.classList.add(`status-${status}`);
+
+            displayCols.forEach(col => {
+                const td = document.createElement('td');
+
+                if (col === 'Remaining_Effort_display') {
+                    /* ── Effort badge ── */
+                    const badge = document.createElement('span');
+                    badge.className = `effort-badge badge-${status}`;
+                    badge.textContent = row[col] || '0.00h';
+                    td.appendChild(badge);
+
+                } else if (col === 'Percentage_Remaining_display') {
+                    /* ── Progress bar ── */
+                    const pct  = Math.min(row.Percentage_Remaining_numeric || 0, 100);
+                    const wrap = document.createElement('div'); wrap.className = 'percent-cell';
+                    const bw   = document.createElement('div'); bw.className = 'percent-bar-wrap';
+                    const bf   = document.createElement('div');
+                    bf.className = `percent-bar-fill fill-${status}`;
+                    bf.style.width = `${pct}%`;
+                    bw.appendChild(bf);
+                    const txt = document.createElement('span'); txt.className = 'percent-text';
+                    txt.textContent = row[col] || '0.00%';
+                    wrap.append(bw, txt);
+                    td.appendChild(wrap);
+
+                } else {
+                    td.textContent = row[col] || '';
+                }
+
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function clearTable() {
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', resetApp);
+</script>
+</body>
+</html>
