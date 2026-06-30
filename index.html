@@ -30,11 +30,10 @@
             --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
             --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.25);
 
-            /* Status Colors */
-            --color-high:   #10B981;   /* Green  > 80h  */
-            --color-medium: #F97316;   /* Orange 20-80h */
-            --color-low:    #EAB308;   /* Yellow 0-20h  */
-            --color-zero:   #EF4444;   /* Red    0h     */
+            --color-high:   #10B981;
+            --color-medium: #F97316;
+            --color-low:    #EAB308;
+            --color-zero:   #EF4444;
 
             --color-high-bg:   #F0FDF4;
             --color-medium-bg: #FFF7ED;
@@ -45,6 +44,11 @@
             --color-medium-badge: #FFEDD5;
             --color-low-badge:    #FEF9C3;
             --color-zero-badge:   #FEE2E2;
+
+            /* Planned effort badge */
+            --color-planned-bg:     #EDE9FE;
+            --color-planned-text:   #5B21B6;
+            --color-planned-border: #C4B5FD;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,7 +63,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             margin: 0 auto;
             background: rgba(255,255,255,0.95);
             border-radius: 20px;
@@ -115,7 +119,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ── Layout ── */
         .content { padding: 30px; }
 
         .section {
@@ -156,7 +159,6 @@
 
         .section-content { padding: 20px; }
 
-        /* ── Form ── */
         .form-group {
             display: flex;
             align-items: center;
@@ -213,7 +215,7 @@
         /* ── Stats ── */
         .summary-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
@@ -242,6 +244,14 @@
             margin-bottom: 10px;
         }
 
+        /* Planned stat card special accent */
+        .stat-card.planned .stat-value {
+            background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .stat-label {
             font-size: 1em;
             color: var(--dark-gray);
@@ -250,7 +260,6 @@
             font-weight: 600;
         }
 
-        /* ── Checkboxes ── */
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px; }
 
         .checkbox-item { display: flex; align-items: center; gap: 8px; }
@@ -307,10 +316,20 @@
             flex-shrink: 0;
         }
 
-        .dot-high   { background: var(--color-high); }
-        .dot-medium { background: var(--color-medium); }
-        .dot-low    { background: var(--color-low); }
-        .dot-zero   { background: var(--color-zero); }
+        .dot-high    { background: var(--color-high); }
+        .dot-medium  { background: var(--color-medium); }
+        .dot-low     { background: var(--color-low); }
+        .dot-planned { background: #7C3AED; border-radius: 50%; }
+
+        /* ── No Data ── */
+        .no-data-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--dark-gray);
+        }
+        .no-data-message .no-data-icon { font-size: 3em; margin-bottom: 15px; }
+        .no-data-message p   { font-size: 1.1em; font-weight: 600; color: #64748b; }
+        .no-data-message span { font-size: 0.9em; color: #94a3b8; }
 
         /* ── TABLE ── */
         .data-table-container {
@@ -327,13 +346,13 @@
             table-layout: fixed;
         }
 
-        /* Column widths */
-        .data-table colgroup col:nth-child(1) { width: 35%; }
-        .data-table colgroup col:nth-child(2) { width: 25%; }
-        .data-table colgroup col:nth-child(3) { width: 20%; }
-        .data-table colgroup col:nth-child(4) { width: 20%; }
+        /* 5 core columns now */
+        .data-table colgroup col:nth-child(1) { width: 28%; }  /* Task           */
+        .data-table colgroup col:nth-child(2) { width: 20%; }  /* Assignee       */
+        .data-table colgroup col:nth-child(3) { width: 15%; }  /* Planned Effort */
+        .data-table colgroup col:nth-child(4) { width: 15%; }  /* Remaining      */
+        .data-table colgroup col:nth-child(5) { width: 22%; }  /* % Remaining    */
 
-        /* Header */
         .data-table th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: var(--white);
@@ -350,11 +369,12 @@
             vertical-align: middle;
         }
 
-        .data-table th:nth-child(3),
-        .data-table th:nth-child(4) { text-align: right; }
-        .data-table th:last-child    { border-right: none; }
+        /* right-align numeric cols (3,4,5) */
+        .data-table th:nth-child(n+3),
+        .data-table td:nth-child(n+3) { text-align: right; }
 
-        /* Cells */
+        .data-table th:last-child { border-right: none; }
+
         .data-table td {
             padding: 14px 20px;
             border-bottom: 1px solid rgba(226,232,240,0.6);
@@ -367,48 +387,28 @@
             border-right: 1px solid rgba(226,232,240,0.4);
         }
 
-        .data-table td:nth-child(3),
-        .data-table td:nth-child(4) { text-align: right; }
-        .data-table td:first-child   { white-space: normal; word-break: break-word; }
-        .data-table td:last-child    { border-right: none; }
+        .data-table td:first-child  { white-space: normal; word-break: break-word; }
+        .data-table td:last-child   { border-right: none; }
 
-        /* ── Row base & alternating ── */
+        /* Row base */
         .data-table tbody tr {
             background: var(--white);
             transition: background 0.2s ease, box-shadow 0.2s ease;
         }
-
         .data-table tbody tr:nth-child(even) { background: #f8fafc; }
 
-        /* ── Status rows — left accent + subtle bg tint ── */
-        .data-table tbody tr.status-high {
-            border-left: 5px solid var(--color-high);
-            background: var(--color-high-bg) !important;
-        }
+        /* Status rows */
+        .data-table tbody tr.status-high   { border-left: 5px solid var(--color-high);   background: var(--color-high-bg)   !important; }
+        .data-table tbody tr.status-medium { border-left: 5px solid var(--color-medium); background: var(--color-medium-bg) !important; }
+        .data-table tbody tr.status-low    { border-left: 5px solid var(--color-low);    background: var(--color-low-bg)    !important; }
 
-        .data-table tbody tr.status-medium {
-            border-left: 5px solid var(--color-medium);
-            background: var(--color-medium-bg) !important;
-        }
-
-        .data-table tbody tr.status-low {
-            border-left: 5px solid var(--color-low);
-            background: var(--color-low-bg) !important;
-        }
-
-        .data-table tbody tr.status-zero {
-            border-left: 5px solid var(--color-zero);
-            background: var(--color-zero-bg) !important;
-        }
-
-        /* Hover */
         .data-table tbody tr:hover {
             filter: brightness(0.95);
             box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
             cursor: default;
         }
 
-        /* ── Effort Badge ── */
+        /* ── Effort Badge (Remaining) ── */
         .effort-badge {
             display: inline-block;
             padding: 4px 14px;
@@ -423,7 +423,21 @@
         .badge-high   { background: var(--color-high-badge);   color: #065F46; border: 1px solid #6EE7B7; }
         .badge-medium { background: var(--color-medium-badge);  color: #9A3412; border: 1px solid #FDBA74; }
         .badge-low    { background: var(--color-low-badge);     color: #713F12; border: 1px solid #FDE047; }
-        .badge-zero   { background: var(--color-zero-badge);    color: #991B1B; border: 1px solid #FCA5A5; }
+
+        /* ── Planned Effort Badge ── */
+        .planned-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            min-width: 70px;
+            text-align: center;
+            background: var(--color-planned-bg);
+            color: var(--color-planned-text);
+            border: 1px solid var(--color-planned-border);
+        }
 
         /* ── Percent bar ── */
         .percent-cell {
@@ -448,11 +462,9 @@
             transition: width 0.6s ease;
         }
 
-        /* bar fill colours match status */
         .fill-high   { background: var(--color-high); }
         .fill-medium { background: var(--color-medium); }
         .fill-low    { background: var(--color-low); }
-        .fill-zero   { background: var(--color-zero); }
 
         .percent-text {
             min-width: 58px;
@@ -468,16 +480,13 @@
             margin-bottom: 20px;
             font-weight: 500;
         }
-
         .alert-info    { background: var(--light-blue);    color: var(--accent-blue);   border: 1px solid var(--secondary-blue); }
         .alert-success { background: var(--light-success); color: var(--success-green); border: 1px solid var(--success-green); }
         .alert-error   { background: var(--light-error);   color: var(--error-red);     border: 1px solid var(--error-red); }
 
-        /* ── File input ── */
         .file-input-wrapper { position: relative; display: inline-block; overflow: hidden; cursor: pointer; }
         .file-input-wrapper input[type="file"] { position: absolute; left: -9999px; }
 
-        /* ── Loading ── */
         .loading { display: none; text-align: center; padding: 50px; color: var(--primary-blue); }
 
         .spinner {
@@ -487,6 +496,37 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
+        }
+
+        /* ── Skipped Info Banner ── */
+        .skipped-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: #0369a1;
+            font-weight: 500;
+        }
+        .skipped-banner .banner-icon { font-size: 1.2em; }
+
+        /* ── Planned formula tooltip hint ── */
+        .formula-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #6B7280;
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin-left: 8px;
+            font-style: italic;
         }
 
         .hidden { display: none; }
@@ -553,13 +593,21 @@
 
         <!-- Summary Stats -->
         <div class="summary-stats hidden" id="summarySection">
+            <div class="stat-card planned">
+                <div class="stat-value" id="totalPlanned">N/A</div>
+                <div class="stat-label">🗓️ Total Planned Effort</div>
+            </div>
             <div class="stat-card">
                 <div class="stat-value" id="totalEffort">N/A</div>
                 <div class="stat-label">⏱️ Total Remaining Effort</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="avgPercent">N/A</div>
-                <div class="stat-label">📈 Average % Remaining</div>
+                <div class="stat-label">📈 Avg % Remaining</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="visibleTasks">N/A</div>
+                <div class="stat-label">📋 Active Tasks Shown</div>
             </div>
         </div>
 
@@ -573,9 +621,11 @@
 
         <!-- Data Display -->
         <div class="section hidden" id="dataSection">
-            <div class="section-header">📋 Data Display</div>
+            <div class="section-header">
+                📋 Data Display
+                <span class="formula-hint">💡 Planned = Remaining ÷ (% Remaining / 100)</span>
+            </div>
 
-            <!-- Legend -->
             <div class="legend">
                 <span class="legend-title">Effort Status:</span>
                 <div class="legend-item">
@@ -591,15 +641,21 @@
                     <span>Low &gt; 0 to &lt; 20h</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-dot dot-zero"></div>
-                    <span>Zero 0h</span>
+                    <div class="legend-dot dot-planned"></div>
+                    <span>Planned Effort (calculated)</span>
                 </div>
             </div>
 
             <div class="section-content">
+                <!-- Skipped rows banner -->
+                <div class="skipped-banner hidden" id="skippedBanner">
+                    <span class="banner-icon">ℹ️</span>
+                    <span id="skippedBannerText"></span>
+                </div>
+
                 <div class="data-table-container">
                     <table class="data-table" id="dataTable">
-                        <colgroup><col><col><col><col></colgroup>
+                        <colgroup><col><col><col><col><col></colgroup>
                         <thead id="tableHead"></thead>
                         <tbody id="tableBody"></tbody>
                     </table>
@@ -624,7 +680,9 @@
     let filteredData    = null;
     let selectedColumns = [];
 
-    /* ── Helpers ── */
+    /* ─────────────────────────────────────────
+       Helpers
+    ───────────────────────────────────────── */
     function cleanNumericValue(v) {
         if (v === null || v === undefined || String(v).trim() === '') return 0;
         let s = String(v).trim().toLowerCase();
@@ -638,18 +696,30 @@
     }
 
     /*
-     * ── REVERSED STATUS LOGIC ──────────────────────────────────
-     *  > 80h  → 'high'   (Green)
-     *  20-80h → 'medium' (Orange)
-     *  0-20h  → 'low'    (Yellow)
-     *  0h     → 'zero'   (Red)
-     * ───────────────────────────────────────────────────────────
+     * ── PLANNED EFFORT FORMULA ───────────────────────────────
+     *
+     *   Planned = Remaining ÷ (Percentage_Remaining / 100)
+     *
+     *   Examples:
+     *     remaining=25h, %remaining=100% → planned = 25 ÷ 1.00 = 25h
+     *     remaining=0.75h, %remaining=25% → planned = 0.75 ÷ 0.25 = 3h
+     *     remaining=2h, %remaining=50%  → planned = 2 ÷ 0.50 = 4h
+     *
+     *   Edge cases:
+     *     %remaining = 0  → task is fully done (remaining should be 0 too)
+     *                        return remaining as-is (will be hidden anyway)
+     *     %remaining = 100 → planned = remaining (nothing done yet)
+     * ─────────────────────────────────────────────────────────
      */
+    function calcPlannedEffort(remainingHours, percentRemaining) {
+        if (percentRemaining <= 0) return remainingHours;   // edge-case guard
+        return remainingHours / (percentRemaining / 100);
+    }
+
     function getEffortStatus(hours) {
-        if (hours === 0)    return 'zero';    // Red
-        if (hours < 20)     return 'low';     // Yellow
-        if (hours <= 80)    return 'medium';  // Orange
-        return 'high';                        // Green
+        if (hours < 20)   return 'low';     // Yellow  >0 and <20
+        if (hours <= 80)  return 'medium';  // Orange  20-80
+        return 'high';                      // Green   >80
     }
 
     function showAlert(msg, type = 'info') {
@@ -673,8 +743,11 @@
         document.getElementById('columnCheckboxes').innerHTML = '';
         document.getElementById('tableHead').innerHTML = '';
         document.getElementById('tableBody').innerHTML = '';
-        document.getElementById('totalEffort').textContent = 'N/A';
-        document.getElementById('avgPercent').textContent  = 'N/A';
+        document.getElementById('totalPlanned').textContent = 'N/A';
+        document.getElementById('totalEffort').textContent  = 'N/A';
+        document.getElementById('avgPercent').textContent   = 'N/A';
+        document.getElementById('visibleTasks').textContent = 'N/A';
+        document.getElementById('skippedBanner').classList.add('hidden');
         ['sheetSection','filterSection','summarySection','columnSection','dataSection']
             .forEach(id => document.getElementById(id).classList.add('hidden'));
     }
@@ -779,18 +852,30 @@
     function processLoadedData(sheetName, headerRow) {
         processedData = originalData.map(r => ({ ...r }));
         let currentParent = '';
+
         processedData.forEach(row => {
             if (!String(row.Name).startsWith('>')) currentParent = row.Name;
             row.Parent_Task = currentParent;
-            row.Remaining_numeric            = cleanNumericValue(row.Remaining);
-            row.Percent_complete_numeric      = cleanPercentValue(row['Percent complete']);
-            row.Percentage_Remaining_numeric  = 100 - row.Percent_complete_numeric;
-            row.Remaining_Effort_display      = row.Remaining_numeric.toFixed(2) + 'h';
-            row.Percentage_Remaining_display  = row.Percentage_Remaining_numeric.toFixed(2) + '%';
+
+            row.Remaining_numeric           = cleanNumericValue(row.Remaining);
+            row.Percent_complete_numeric     = cleanPercentValue(row['Percent complete']);
+            row.Percentage_Remaining_numeric = 100 - row.Percent_complete_numeric;
+
+            // ── Planned Effort calculation ──
+            row.Planned_numeric = calcPlannedEffort(
+                row.Remaining_numeric,
+                row.Percentage_Remaining_numeric
+            );
+            row.Planned_display = row.Planned_numeric.toFixed(2) + 'h';
+
+            row.Remaining_Effort_display     = row.Remaining_numeric.toFixed(2) + 'h';
+            row.Percentage_Remaining_display = row.Percentage_Remaining_numeric.toFixed(2) + '%';
+
             row.Task         = row.Parent_Task;
             row.Assignee     = row.Name;
             row.effortStatus = getEffortStatus(row.Remaining_numeric);
         });
+
         showAlert(`Sheet '${sheetName}' loaded (header row ${headerRow + 1}).`, 'success');
         populateNameDropdown();
         populateColumnSelection();
@@ -824,7 +909,8 @@
             'Name','Remaining','Percent complete',
             'Remaining_numeric','Percent_complete_numeric','Parent_Task',
             'Task','Assignee','Remaining_Effort_display',
-            'Percentage_Remaining_display','Percentage_Remaining_numeric','effortStatus'
+            'Percentage_Remaining_display','Percentage_Remaining_numeric',
+            'Planned_numeric','Planned_display','effortStatus'
         ]);
         Object.keys(originalData[0]).filter(c => !excluded.has(c)).forEach(col => {
             const item = document.createElement('div'); item.className = 'checkbox-item';
@@ -851,15 +937,18 @@
         const name = document.getElementById('nameSelect').value;
         if (!name || !processedData) {
             clearTable();
-            document.getElementById('totalEffort').textContent = 'N/A';
-            document.getElementById('avgPercent').textContent  = 'N/A';
+            document.getElementById('totalPlanned').textContent = 'N/A';
+            document.getElementById('totalEffort').textContent  = 'N/A';
+            document.getElementById('avgPercent').textContent   = 'N/A';
+            document.getElementById('visibleTasks').textContent = 'N/A';
+            document.getElementById('skippedBanner').classList.add('hidden');
             document.getElementById('summarySection').classList.add('hidden');
             document.getElementById('dataSection').classList.add('hidden');
             return;
         }
 
-        filteredData = processedData.filter(r => r.Name === name);
-        if (!filteredData.length) {
+        const allRows  = processedData.filter(r => r.Name === name);
+        if (!allRows.length) {
             showAlert(`No data for '${name}'.`, 'info');
             clearTable();
             document.getElementById('summarySection').classList.add('hidden');
@@ -867,33 +956,92 @@
             return;
         }
 
-        const totalEffort = filteredData.reduce((s, r) => s + r.Remaining_numeric, 0);
-        const avgPct      = filteredData.reduce((s, r) => s + r.Percentage_Remaining_numeric, 0) / filteredData.length;
-        document.getElementById('totalEffort').textContent = `${totalEffort.toFixed(2)}h`;
-        document.getElementById('avgPercent').textContent  = `${avgPct.toFixed(2)}%`;
+        // Hide zero-effort rows
+        const zeroRows = allRows.filter(r => r.Remaining_numeric === 0);
+        filteredData   = allRows.filter(r => r.Remaining_numeric  > 0);
+
+        // Stats
+        const totalPlanned  = filteredData.reduce((s, r) => s + r.Planned_numeric,  0);
+        const totalEffort   = filteredData.reduce((s, r) => s + r.Remaining_numeric, 0);
+        const avgPct = filteredData.length
+            ? filteredData.reduce((s, r) => s + r.Percentage_Remaining_numeric, 0) / filteredData.length
+            : 0;
+
+        document.getElementById('totalPlanned').textContent  = `${totalPlanned.toFixed(2)}h`;
+        document.getElementById('totalEffort').textContent   = `${totalEffort.toFixed(2)}h`;
+        document.getElementById('avgPercent').textContent    = `${avgPct.toFixed(2)}%`;
+        document.getElementById('visibleTasks').textContent  = filteredData.length;
+
+        // Hidden rows banner
+        const banner     = document.getElementById('skippedBanner');
+        const bannerText = document.getElementById('skippedBannerText');
+        if (zeroRows.length > 0) {
+            bannerText.textContent =
+                `${zeroRows.length} task${zeroRows.length > 1 ? 's' : ''} with 0h remaining effort ` +
+                `${zeroRows.length > 1 ? 'are' : 'is'} hidden from this view.`;
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+
+        if (!filteredData.length) {
+            clearTable();
+            showNoDataMessage();
+            document.getElementById('summarySection').classList.remove('hidden');
+            document.getElementById('dataSection').classList.remove('hidden');
+            return;
+        }
 
         displayTable();
         document.getElementById('summarySection').classList.remove('hidden');
         document.getElementById('dataSection').classList.remove('hidden');
     }
 
+    function showNoDataMessage() {
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = `
+            <tr>
+                <td colspan="5" style="border:none; padding:0;">
+                    <div class="no-data-message">
+                        <div class="no-data-icon">✅</div>
+                        <p>All tasks completed!</p>
+                        <span>No tasks with remaining effort to display.</span>
+                    </div>
+                </td>
+            </tr>`;
+    }
+
     /* ── Table render ── */
     function displayTable() {
-        const extraCols   = selectedColumns;
-        const totalCols   = 4 + extraCols.length;
+        const extraCols = selectedColumns;
+
+        /*
+         * Core columns order:
+         *  1. Task
+         *  2. Assignee
+         *  3. Planned_display       ← NEW
+         *  4. Remaining_Effort_display
+         *  5. Percentage_Remaining_display
+         *  6+ extra checked columns
+         */
         const displayCols = [
-            'Task','Assignee',
-            'Remaining_Effort_display','Percentage_Remaining_display',
+            'Task',
+            'Assignee',
+            'Planned_display',
+            'Remaining_Effort_display',
+            'Percentage_Remaining_display',
             ...extraCols
         ];
+
+        const totalCols = displayCols.length;
 
         /* colgroup */
         const cg = document.querySelector('#dataTable colgroup');
         cg.innerHTML = '';
-        const basePcts = ['35%','25%','20%','20%'];
+        const basePcts = ['28%','20%','13%','13%','18%'];
         for (let i = 0; i < totalCols; i++) {
             const col = document.createElement('col');
-            col.style.width = basePcts[i] || `${Math.floor(40 / extraCols.length)}%`;
+            col.style.width = basePcts[i] || `${Math.floor(40 / Math.max(extraCols.length,1))}%`;
             cg.appendChild(col);
         }
 
@@ -901,12 +1049,15 @@
         const thead = document.getElementById('tableHead');
         thead.innerHTML = '';
         const hr = document.createElement('tr');
+
         const labels = {
-            Task: 'TASK',
-            Assignee: 'ASSIGNEE',
-            Remaining_Effort_display: 'REMAINING EFFORT',
-            Percentage_Remaining_display: 'PERCENTAGE REMAINING'
+            Task:                         'TASK',
+            Assignee:                     'ASSIGNEE',
+            Planned_display:              '🗓️ PLANNED EFFORT',
+            Remaining_Effort_display:     '⏱️ REMAINING EFFORT',
+            Percentage_Remaining_display: '📊 % REMAINING'
         };
+
         displayCols.forEach(col => {
             const th = document.createElement('th');
             th.textContent = labels[col] || col.replace(/_display$/,'').replace(/_/g,' ').toUpperCase();
@@ -920,14 +1071,21 @@
 
         filteredData.forEach(row => {
             const tr     = document.createElement('tr');
-            const status = row.effortStatus;   // 'high' | 'medium' | 'low' | 'zero'
+            const status = row.effortStatus;
             tr.classList.add(`status-${status}`);
 
             displayCols.forEach(col => {
                 const td = document.createElement('td');
 
-                if (col === 'Remaining_Effort_display') {
-                    /* ── Effort badge ── */
+                if (col === 'Planned_display') {
+                    /* ── Planned effort — purple badge ── */
+                    const badge = document.createElement('span');
+                    badge.className = 'planned-badge';
+                    badge.textContent = row[col] || '0.00h';
+                    td.appendChild(badge);
+
+                } else if (col === 'Remaining_Effort_display') {
+                    /* ── Remaining effort — status badge ── */
                     const badge = document.createElement('span');
                     badge.className = `effort-badge badge-${status}`;
                     badge.textContent = row[col] || '0.00h';
